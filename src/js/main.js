@@ -1,0 +1,1201 @@
+// Podcast Script Generator JavaScript
+
+class PodcastScriptGenerator {
+  constructor() {
+    this.form = document.getElementById("podcastForm");
+    this.outputSection = document.getElementById("outputSection");
+    this.scriptContent = document.getElementById("scriptContent");
+    this.loadingOverlay = document.getElementById("loadingOverlay");
+
+    this.initializeEventListeners();
+  }
+
+  initializeEventListeners() {
+    console.log("Initializing event listeners...");
+
+    // Form submission
+    if (this.form) {
+      this.form.addEventListener("submit", (e) => this.handleFormSubmit(e));
+      console.log("Form submit listener added");
+    }
+
+    // Output buttons
+    const copyBtn = document.getElementById("copyBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const printBtn = document.getElementById("printBtn");
+    const newScriptBtn = document.getElementById("newScriptBtn");
+
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => this.copyScript());
+      console.log("Copy button listener added");
+    }
+    if (downloadBtn) {
+      downloadBtn.addEventListener("click", () => this.downloadScript());
+      console.log("Download button listener added");
+    }
+    if (printBtn) {
+      printBtn.addEventListener("click", () => this.printScript());
+      console.log("Print button listener added");
+    }
+    if (newScriptBtn) {
+      newScriptBtn.addEventListener("click", () => this.resetForm());
+      console.log("New script button listener added");
+    }
+
+    // Form buttons
+    const fillSampleBtn = document.getElementById("fillSampleBtn");
+    const clearFormBtn = document.getElementById("clearFormBtn");
+
+    if (fillSampleBtn) {
+      fillSampleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        console.log("Sample button clicked");
+        this.fillSampleData();
+      });
+      console.log("Sample button listener added");
+    } else {
+      console.error("Fill sample button not found");
+    }
+
+    if (clearFormBtn) {
+      clearFormBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        console.log("Clear button clicked");
+        this.clearForm();
+      });
+      console.log("Clear button listener added");
+    } else {
+      console.error("Clear form button not found");
+    }
+  }
+
+  async handleFormSubmit(e) {
+    e.preventDefault();
+    console.log("Form submitted");
+
+    const formData = new FormData(this.form);
+    const podcastData = Object.fromEntries(formData);
+
+    // Add checkbox values
+    podcastData.includeAds = document.getElementById("includeAds").checked;
+    podcastData.includeTimestamps =
+      document.getElementById("includeTimestamps").checked;
+    podcastData.includeTagline =
+      document.getElementById("includeTagline").checked;
+
+    this.showLoading();
+
+    try {
+      const script = await this.generateScript(podcastData);
+      this.displayScript(script);
+    } catch (error) {
+      console.error("Error generating script:", error);
+      this.showNotification(
+        "Error generating script. Please try again.",
+        "error"
+      );
+    } finally {
+      this.hideLoading();
+    }
+  }
+
+  async generateScript(data) {
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    return this.createScriptContent(data);
+  }
+
+  createScriptContent(data) {
+    const hosts = this.parseHosts(data.hosts);
+    const duration = parseInt(data.duration);
+    const segments = this.calculateSegments(duration);
+
+    let script = "";
+
+    // Header
+    script += `🎙️ PODCAST SCRIPT\n`;
+    script += `📻 ${data.podcastName}\n`;
+    script += `📝 Episode: ${data.episodeTitle}\n`;
+    script += `⏱️ Duration: ${data.duration} minutes\n`;
+    script += `🎯 Target Audience: ${data.targetAudience}\n`;
+    script += `🎭 Tone: ${
+      data.tone.charAt(0).toUpperCase() + data.tone.slice(1)
+    }\n\n`;
+
+    if (data.includeTagline) {
+      script += `🏷️ TAGLINE: "${this.generateTagline(data)}"\n\n`;
+    }
+
+    // Intro
+    script += `🎵 [INTRO MUSIC - ${this.getIntroMusic(data.tone)}]\n\n`;
+    script += `[${this.getTimestamp(0, data.includeTimestamps)}] `;
+    script += `${this.generateIntro(data, hosts)}\n\n`;
+
+    // Main Content Segments
+    const mainSegments = this.generateMainSegments(data, hosts, segments);
+    script += mainSegments;
+
+    // Ad Breaks
+    if (data.includeAds) {
+      script += this.generateAdBreaks(data, duration);
+    }
+
+    // Conclusion
+    script += this.generateConclusion(data, hosts);
+
+    // Outro
+    script += `\n🎵 [OUTRO MUSIC - ${this.getOutroMusic(data.tone)}]\n\n`;
+    script += `📱 CALL TO ACTION:\n`;
+    script += `• Follow us on social media\n`;
+    script += `• Share this episode with friends\n`;
+    script += `• Leave us a review on your favorite podcast platform\n`;
+    script += `• Visit our website for more content\n\n`;
+
+    script += `🎬 END OF EPISODE\n`;
+    script += `Total Runtime: ${data.duration} minutes\n`;
+    script += `Generated by Podcast Script Generator`;
+
+    return script;
+  }
+
+  parseHosts(hostsString) {
+    return hostsString.split(";").map((host) => {
+      const parts = host.trim().split("—");
+      return {
+        name: parts[0].trim(),
+        personality: parts[1] ? parts[1].trim() : "engaging",
+      };
+    });
+  }
+
+  calculateSegments(duration) {
+    const segments = [];
+    const segmentDuration = Math.max(5, Math.floor(duration / 6));
+
+    // More segments for longer, more detailed scripts
+    const segmentTypes = [
+      "introduction",
+      "main_topic_1",
+      "main_topic_2",
+      "discussion",
+      "examples",
+      "conclusion",
+    ];
+
+    for (let i = 0; i < 6; i++) {
+      segments.push({
+        start: i * segmentDuration,
+        duration: segmentDuration,
+        type: segmentTypes[i],
+      });
+    }
+
+    return segments;
+  }
+
+  generateIntro(data, hosts) {
+    const intros = {
+      casual: `Hey everyone! Welcome back to ${data.podcastName}. I'm ${hosts[0].name}, and today we're diving into ${data.topic}.`,
+      funny: `Well, well, well... look who's back for another episode of ${data.podcastName}! I'm ${hosts[0].name}, and today we're tackling ${data.topic} - and trust me, it's going to be wild!`,
+      professional: `Good day, and welcome to ${data.podcastName}. I'm ${hosts[0].name}, and today we'll be exploring ${data.topic} with expert insights and practical takeaways.`,
+      educational: `Welcome to ${data.podcastName}, where we make learning fun and accessible. I'm ${hosts[0].name}, and today's topic is ${data.topic}.`,
+      emotional: `Hello, beautiful souls. Welcome to ${data.podcastName}. I'm ${hosts[0].name}, and today we're going to have a heartfelt conversation about ${data.topic}.`,
+      motivational: `Rise and shine, champions! Welcome to ${data.podcastName}. I'm ${hosts[0].name}, and today we're going to transform your understanding of ${data.topic}.`,
+      storytelling: `Once upon a time, in the world of ${data.topic}... Welcome to ${data.podcastName}. I'm ${hosts[0].name}, and today we're going on a journey.`,
+    };
+
+    return intros[data.tone] || intros.casual;
+  }
+
+  generateMainSegments(data, hosts, segments) {
+    let content = "";
+
+    // Segment 1: Introduction
+    content += `[${this.getTimestamp(
+      segments[0].start,
+      data.includeTimestamps
+    )}] `;
+    content += `${this.generateSegmentIntro(data, hosts)}\n\n`;
+
+    // Segment 2: Main Topic 1
+    content += `[${this.getTimestamp(
+      segments[1].start,
+      data.includeTimestamps
+    )}] `;
+    content += `${this.generateMainTopic1(data, hosts)}\n\n`;
+
+    // Segment 3: Main Topic 2
+    content += `[${this.getTimestamp(
+      segments[2].start,
+      data.includeTimestamps
+    )}] `;
+    content += `${this.generateMainTopic2(data, hosts)}\n\n`;
+
+    // Segment 4: Discussion
+    content += `[${this.getTimestamp(
+      segments[3].start,
+      data.includeTimestamps
+    )}] `;
+    content += `${this.generateDiscussion(data, hosts)}\n\n`;
+
+    // Segment 5: Examples
+    content += `[${this.getTimestamp(
+      segments[4].start,
+      data.includeTimestamps
+    )}] `;
+    content += `${this.generateExamples(data, hosts)}\n\n`;
+
+    // Segment 6: Conclusion
+    content += `[${this.getTimestamp(
+      segments[5].start,
+      data.includeTimestamps
+    )}] `;
+    content += `${this.generateSegmentConclusion(data, hosts)}\n\n`;
+
+    return content;
+  }
+
+  generateSegmentIntro(data, hosts) {
+    const host = hosts[0];
+    return `${host.name}: "So today we're talking about ${data.topic}, and I think this is something that really resonates with our audience of ${data.targetAudience}. What got you interested in this topic?"`;
+  }
+
+  generateMainTopic1(data, hosts) {
+    const facts = this.getTopicFacts(data.topic);
+    const host = hosts[0];
+    const host2 = hosts[1] || hosts[0];
+
+    return `${host.name}: "Let's dive into the heart of ${data.topic}. Did you know that ${facts.fact}? This is really important because ${facts.importance}."\n\n${host2.name}: "That's fascinating! And what I find particularly interesting is how this connects to our daily lives. For our listeners who are ${data.targetAudience}, this is especially relevant because it directly impacts their decision-making process."\n\n${host.name}: "Absolutely! And there's so much more to explore here. The research shows that understanding ${data.topic} can lead to significant improvements in various areas of life."`;
+  }
+
+  generateMainTopic2(data, hosts) {
+    const host = hosts[0];
+    const host2 = hosts[1] || hosts[0];
+
+    return `${
+      host.name
+    }: "Now, let's dig deeper into the practical aspects of ${
+      data.topic
+    }. What are some common misconceptions that people have about this topic?"\n\n${
+      host2.name
+    }: "Great question! One of the biggest myths I hear is that ${this.getCommonMyth(
+      data.topic
+    )}. But the reality is quite different. In fact, studies have shown that the opposite is often true."\n\n${
+      host.name
+    }: "That's such an important distinction to make. And for our audience of ${
+      data.targetAudience
+    }, understanding these nuances can make all the difference in their approach to this topic."`;
+  }
+
+  generateDiscussion(data, hosts) {
+    const host1 = hosts[0];
+    const host2 = hosts[1] || hosts[0];
+
+    return `${host1.name}: "That's a great point. What I find fascinating is how this connects to our daily lives. Let's talk about the real-world applications of ${data.topic}."\n\n${host2.name}: "Absolutely! And for our listeners who are ${data.targetAudience}, this is particularly relevant because it directly impacts their daily decisions and long-term goals. I've seen firsthand how understanding these concepts can transform someone's approach to this area."\n\n${host1.name}: "That's so true! And I think what makes this even more interesting is how it intersects with other important areas. There's this fascinating connection between ${data.topic} and broader life principles that we should explore."\n\n${host2.name}: "Exactly! And that's why I'm so excited to share some practical strategies that our listeners can implement right away. These aren't just theoretical concepts - they're actionable insights that can make a real difference."`;
+  }
+
+  generateExamples(data, hosts) {
+    const host1 = hosts[0];
+    const host2 = hosts[1] || hosts[0];
+
+    return `${host1.name}: "Let's dive into some concrete examples. I want to share a story that really illustrates the power of understanding ${data.topic}."\n\n${host2.name}: "I love that! Real examples make everything so much clearer. What happened in your story?"\n\n${host1.name}: "Well, there was this situation where someone applied the principles we've been discussing, and the results were remarkable. It really shows how ${data.topic} can be a game-changer when you understand the underlying concepts."\n\n${host2.name}: "That's incredible! And I have a similar example from my own experience. It's amazing how these principles work across different contexts and situations. The key is understanding the fundamentals and then adapting them to your specific circumstances."\n\n${host1.name}: "Absolutely! And that's what makes this so valuable for our audience of ${data.targetAudience}. These aren't one-size-fits-all solutions, but rather frameworks that can be customized to individual needs and goals."`;
+  }
+
+  generateSegmentConclusion(data, hosts) {
+    const host = hosts[0];
+    const host2 = hosts[1] || hosts[0];
+
+    return `${
+      host.name
+    }: "As we wrap up this segment, I want to leave you with this thought: ${this.getMotivationalQuote(
+      data.tone
+    )}"\n\n${
+      host2.name
+    }: "That's so powerful! And I think what we've covered today really shows how ${
+      data.topic
+    } can be a game-changer for our listeners. The key is taking action on what we've discussed."\n\n${
+      host.name
+    }: "Absolutely! And remember, our audience of ${
+      data.targetAudience
+    } has the power to make a real difference. These aren't just concepts - they're tools for transformation."\n\n${
+      host2.name
+    }: "I couldn't agree more. And if you're listening and this resonates with you, I encourage you to start small. Pick one thing we've discussed today and implement it this week. That's how real change happens."\n\n${
+      host.name
+    }: "Perfect advice! And don't forget to share your experiences with us. We love hearing from our community about how these ideas are working in your life."`;
+  }
+
+  generateAdBreaks(data, duration) {
+    const adBreaks = [];
+    const adInterval = Math.floor(duration / 3);
+
+    for (let i = 1; i < 3; i++) {
+      const time = i * adInterval;
+      adBreaks.push(`\n[${this.getTimestamp(time, data.includeTimestamps)}] `);
+      adBreaks.push(`🎯 AD BREAK\n`);
+      adBreaks.push(
+        `"Before we continue, I want to tell you about our amazing sponsor..."\n`
+      );
+      adBreaks.push(`[30-second ad read]\n`);
+      adBreaks.push(
+        `"Thanks to our sponsor for supporting the show. Now, back to our conversation..."\n\n`
+      );
+    }
+
+    return adBreaks.join("");
+  }
+
+  generateConclusion(data, hosts) {
+    const host = hosts[0];
+    const host2 = hosts[1] || hosts[0];
+
+    return `[${this.getTimestamp(
+      parseInt(data.duration) - 5,
+      data.includeTimestamps
+    )}] ${host.name}: "Well, that's a wrap on today's episode about ${
+      data.topic
+    }. I hope you found this conversation as enlightening as I did."\n\n${
+      host2.name
+    }: "I absolutely did! And I think what we've covered today really demonstrates the power of understanding ${
+      data.topic
+    }. For our listeners who are ${
+      data.targetAudience
+    }, this information can be truly transformative."\n\n${
+      host.name
+    }: "Couldn't agree more! And I want to emphasize something important - this isn't just theoretical knowledge. These are practical insights that you can start applying immediately. The key is taking that first step."\n\n${
+      host2.name
+    }: "Exactly! And remember, change doesn't happen overnight. It's about consistent, small actions that compound over time. Start with one thing we discussed today and build from there."\n\n${
+      host.name
+    }: "Perfect advice! And I want to thank our amazing audience for joining us today. Your engagement and questions make these conversations so much richer."\n\n${
+      host2.name
+    }: "Absolutely! And if you found value in today's episode, please share it with someone who might benefit. That's how we grow this amazing community of ${
+      data.targetAudience
+    }."\n\n${
+      host.name
+    }: "That's the spirit! And don't forget to follow us on social media for daily tips and behind-the-scenes content. We love connecting with our listeners beyond the podcast."\n\n${
+      host2.name
+    }: "And if you have questions or want to share your own experiences with ${
+      data.topic
+    }, reach out to us. We read every message and often feature listener stories in future episodes."\n\n${
+      host.name
+    }: "That's a great point! Your stories and insights make this podcast what it is. So keep those messages coming, and we'll see you next time for another deep dive into topics that matter to our community."`;
+  }
+
+  generateTagline(data) {
+    const taglines = {
+      casual: `The ${data.topic} conversation you didn't know you needed`,
+      funny: `Where ${data.topic} meets comedy and chaos`,
+      professional: `Expert insights on ${data.topic} for ${data.targetAudience}`,
+      educational: `Learn ${data.topic} the fun way`,
+      emotional: `Heart-to-heart conversations about ${data.topic}`,
+      motivational: `Transform your ${data.topic} journey today`,
+      storytelling: `The ${data.topic} story that will change your perspective`,
+    };
+
+    return taglines[data.tone] || taglines.casual;
+  }
+
+  getIntroMusic(tone) {
+    const music = {
+      casual: "upbeat, friendly",
+      funny: "playful, energetic",
+      professional: "sophisticated, clean",
+      educational: "inspiring, academic",
+      emotional: "warm, gentle",
+      motivational: "powerful, uplifting",
+      storytelling: "mysterious, engaging",
+    };
+
+    return music[tone] || music.casual;
+  }
+
+  getOutroMusic(tone) {
+    const music = {
+      casual: "relaxed, friendly",
+      funny: "cheerful, upbeat",
+      professional: "professional, clean",
+      educational: "satisfying, complete",
+      emotional: "warm, comforting",
+      motivational: "inspiring, forward-moving",
+      storytelling: "conclusive, satisfying",
+    };
+
+    return music[tone] || music.casual;
+  }
+
+  getTopicFacts(topic) {
+    const facts = {
+      "mental health": {
+        fact: "1 in 4 people will experience a mental health issue in their lifetime",
+        importance:
+          "understanding mental health helps us support ourselves and others",
+      },
+      business: {
+        fact: "90% of startups fail within their first year",
+        importance:
+          "learning from failures is crucial for entrepreneurial success",
+      },
+      technology: {
+        fact: "the average person checks their phone 96 times per day",
+        importance:
+          "technology shapes our daily lives in ways we often don't realize",
+      },
+      relationships: {
+        fact: "strong relationships can increase life expectancy by up to 50%",
+        importance: "healthy relationships are fundamental to our well-being",
+      },
+      "artificial intelligence": {
+        fact: "AI is expected to create 97 million new jobs by 2025",
+        importance: "understanding AI helps us adapt to the future of work",
+      },
+      cryptocurrency: {
+        fact: "Bitcoin's market cap has grown from $0 to over $1 trillion",
+        importance:
+          "digital currencies are reshaping the global financial system",
+      },
+      cooking: {
+        fact: "people who cook at home eat 67% more vegetables",
+        importance: "home cooking leads to healthier eating habits",
+      },
+      travel: {
+        fact: "travel increases creativity by 50% according to research",
+        importance:
+          "new experiences broaden our perspectives and problem-solving abilities",
+      },
+      climate: {
+        fact: "renewable energy now costs less than fossil fuels in most countries",
+        importance: "sustainable solutions are becoming economically viable",
+      },
+      gaming: {
+        fact: "gamers have 30% better hand-eye coordination than non-gamers",
+        importance: "gaming develops valuable cognitive and motor skills",
+      },
+      meditation: {
+        fact: "just 10 minutes of meditation can reduce stress by 25%",
+        importance:
+          "mindfulness practices have measurable benefits for mental health",
+      },
+      science: {
+        fact: "scientists discover 2.5 million new species each year",
+        importance:
+          "scientific discovery continues to expand our understanding of the world",
+      },
+      art: {
+        fact: "creating art reduces cortisol levels by 75%",
+        importance:
+          "artistic expression is a powerful tool for emotional well-being",
+      },
+      pets: {
+        fact: "pet owners have 30% lower risk of heart disease",
+        importance: "pets provide significant health and emotional benefits",
+      },
+      music: {
+        fact: "music activates every part of the brain simultaneously",
+        importance: "music has unique power to influence mood and cognition",
+      },
+      gardening: {
+        fact: "gardening burns 300-400 calories per hour",
+        importance:
+          "gardening combines physical activity with mental relaxation",
+      },
+      nutrition: {
+        fact: "intermittent fasting can improve insulin sensitivity by 20-31%",
+        importance: "proper nutrition timing can optimize metabolic health",
+      },
+      finance: {
+        fact: "real estate has historically appreciated 3-5% annually",
+        importance: "real estate investment can build long-term wealth",
+      },
+      photography: {
+        fact: "portrait photography increases confidence by 85%",
+        importance:
+          "professional photos can significantly impact personal branding",
+      },
+      language: {
+        fact: "learning a new language increases brain size by 3-4%",
+        importance: "bilingualism enhances cognitive flexibility and memory",
+      },
+      productivity: {
+        fact: "deep work sessions of 90 minutes increase productivity by 40%",
+        importance: "focused work time is more valuable than multitasking",
+      },
+      history: {
+        fact: "ancient civilizations had advanced knowledge of astronomy",
+        importance: "historical study helps us understand human progress",
+      },
+      spirituality: {
+        fact: "meditation reduces anxiety by 60% in just 8 weeks",
+        importance: "spiritual practices provide mental and emotional benefits",
+      },
+      entrepreneurship: {
+        fact: "90% of successful startups pivot their original idea",
+        importance: "flexibility and adaptation are key to business success",
+      },
+      comedy: {
+        fact: "laughter increases endorphins by 200%",
+        importance: "humor is a powerful tool for stress relief and connection",
+      },
+      wildlife: {
+        fact: "dolphins have the largest brain-to-body ratio of any mammal",
+        importance:
+          "studying animal intelligence helps us understand consciousness",
+      },
+      fashion: {
+        fact: "sustainable fashion reduces water usage by 20%",
+        importance: "eco-friendly fashion choices protect our environment",
+      },
+    };
+
+    return (
+      facts[topic.toLowerCase()] || {
+        fact: "this topic affects millions of people worldwide",
+        importance: "understanding this topic can positively impact your life",
+      }
+    );
+  }
+
+  getCommonMyth(topic) {
+    const myths = {
+      "mental health": "seeking help is a sign of weakness",
+      business: "you need a perfect idea to start a business",
+      technology: "AI will replace all human jobs",
+      relationships: "love should be effortless and natural",
+      "artificial intelligence":
+        "AI is too complex for regular people to understand",
+      cryptocurrency: "cryptocurrency is just a scam",
+      cooking: "cooking healthy food takes too much time",
+      travel: "travel is only for the wealthy",
+      climate: "individual actions don't matter for climate change",
+      gaming: "video games are a waste of time",
+      meditation: "meditation requires clearing your mind completely",
+      science: "science is only for geniuses",
+      art: "you need natural talent to be artistic",
+      pets: "pets are just for entertainment",
+      music: "you need expensive equipment to make good music",
+      gardening: "you need a green thumb to garden successfully",
+      nutrition: "skipping meals slows down your metabolism",
+      finance: "you need a lot of money to start investing",
+      photography: "expensive equipment makes you a better photographer",
+      language: "adults can't learn new languages effectively",
+      productivity: "multitasking makes you more productive",
+      history: "history is just memorizing dates and facts",
+      spirituality: "spirituality is only for religious people",
+      entrepreneurship: "you need a perfect business plan to start",
+      comedy: "you're either funny or you're not",
+      wildlife: "animals don't have complex emotions",
+      fashion: "sustainable fashion is always more expensive",
+    };
+
+    return (
+      myths[topic.toLowerCase()] ||
+      "this topic is too difficult for most people to understand"
+    );
+  }
+
+  getMotivationalQuote(tone) {
+    const quotes = {
+      casual: "every expert was once a beginner",
+      funny: "life is what happens when you're busy making other plans",
+      professional: "excellence is not a skill, it's an attitude",
+      educational: "the only way to do great work is to love what you do",
+      emotional: "vulnerability is the birthplace of love, belonging, and joy",
+      motivational: "your only limit is your mind",
+      storytelling: "every story has the power to change a life",
+    };
+
+    return quotes[tone] || quotes.casual;
+  }
+
+  getTimestamp(minutes, includeTimestamps) {
+    if (!includeTimestamps) return "";
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0
+      ? `${hours}:${mins.toString().padStart(2, "0")}`
+      : `${mins}:00`;
+  }
+
+  displayScript(script) {
+    this.scriptContent.textContent = script;
+    this.outputSection.style.display = "block";
+    this.outputSection.scrollIntoView({ behavior: "smooth" });
+  }
+
+  copyScript() {
+    navigator.clipboard
+      .writeText(this.scriptContent.textContent)
+      .then(() => {
+        const btn = document.getElementById("copyBtn");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.add("success");
+
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.classList.remove("success");
+        }, 2000);
+
+        this.showNotification("Script copied to clipboard!", "success");
+      })
+      .catch((err) => {
+        console.error("Failed to copy: ", err);
+        this.showNotification(
+          "Failed to copy script. Please try again.",
+          "error"
+        );
+      });
+  }
+
+  downloadScript() {
+    const script = this.scriptContent.textContent;
+    const blob = new Blob([script], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `podcast-script-${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    this.showNotification("Script downloaded successfully!", "success");
+  }
+
+  printScript() {
+    const scriptContent = this.scriptContent.textContent;
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Podcast Script</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+                        h1 { color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+                        .script-content { white-space: pre-wrap; font-size: 14px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Podcast Script</h1>
+                    <div class="script-content">${scriptContent}</div>
+                </body>
+            </html>
+        `);
+    printWindow.document.close();
+    printWindow.print();
+
+    this.showNotification("Print dialog opened!", "info");
+  }
+
+  resetForm() {
+    this.form.reset();
+    this.outputSection.style.display = "none";
+    this.form.scrollIntoView({ behavior: "smooth" });
+    this.showNotification("Form reset successfully!", "info");
+  }
+
+  fillSampleData() {
+    try {
+      // Array of different sample data sets
+      const sampleDataSets = [
+        {
+          podcastName: "The Mindful Entrepreneur",
+          topic: "mental health and entrepreneurship",
+          episodeTitle: "Breaking Through Mental Barriers in Business",
+          hosts:
+            "Sarah — empathetic and insightful; Mike — practical and motivational",
+          targetAudience: "entrepreneurs and business professionals",
+          tone: "motivational",
+          duration: "30",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Tech Talk Weekly",
+          topic: "artificial intelligence and machine learning",
+          episodeTitle: "The Future of AI in Healthcare",
+          hosts:
+            "Alex — tech-savvy and analytical; Jordan — curious and questioning",
+          targetAudience: "tech enthusiasts and healthcare professionals",
+          tone: "educational",
+          duration: "45",
+          includeAds: false,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Comedy Corner",
+          topic: "everyday life and relationships",
+          episodeTitle: "Dating Disasters and Relationship Fails",
+          hosts: "Emma — hilarious and witty; Tom — sarcastic and observant",
+          targetAudience: "young adults and comedy lovers",
+          tone: "funny",
+          duration: "20",
+          includeAds: true,
+          includeTimestamps: false,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Business Breakthrough",
+          topic: "startup strategies and funding",
+          episodeTitle: "From Idea to IPO: A Startup Journey",
+          hosts: "David — experienced entrepreneur; Lisa — financial expert",
+          targetAudience: "startup founders and investors",
+          tone: "professional",
+          duration: "60",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: false,
+        },
+        {
+          podcastName: "Heart to Heart",
+          topic: "personal growth and self-care",
+          episodeTitle: "Finding Your Inner Strength",
+          hosts:
+            "Maya — compassionate and wise; Chris — supportive and encouraging",
+          targetAudience: "people seeking personal development",
+          tone: "emotional",
+          duration: "25",
+          includeAds: false,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Story Time",
+          topic: "urban legends and mysteries",
+          episodeTitle: "The Haunted History of Old Towns",
+          hosts: "Nina — mysterious storyteller; Ben — skeptical investigator",
+          targetAudience: "mystery lovers and history buffs",
+          tone: "storytelling",
+          duration: "40",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Fitness Focus",
+          topic: "workout routines and nutrition",
+          episodeTitle: "Building Muscle on a Plant-Based Diet",
+          hosts: "Jake — fitness trainer; Maria — nutritionist",
+          targetAudience: "fitness enthusiasts and health-conscious people",
+          tone: "motivational",
+          duration: "35",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Parenting Pro",
+          topic: "child development and parenting tips",
+          episodeTitle: "Raising Confident Kids in a Digital World",
+          hosts: "Dr. Sarah — child psychologist; Mark — experienced dad",
+          targetAudience: "parents and caregivers",
+          tone: "educational",
+          duration: "50",
+          includeAds: false,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Crypto Chronicles",
+          topic: "cryptocurrency and blockchain technology",
+          episodeTitle: "The Future of Digital Currency",
+          hosts: "Max — crypto expert; Zoe — blockchain developer",
+          targetAudience: "crypto investors and tech enthusiasts",
+          tone: "professional",
+          duration: "55",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Foodie Adventures",
+          topic: "culinary experiences and cooking techniques",
+          episodeTitle: "Mastering the Art of Sourdough Bread",
+          hosts: "Chef Maria — professional baker; Tony — home cook",
+          targetAudience: "food lovers and cooking enthusiasts",
+          tone: "casual",
+          duration: "35",
+          includeAds: true,
+          includeTimestamps: false,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Travel Tales",
+          topic: "adventure travel and cultural experiences",
+          episodeTitle: "Hidden Gems of Southeast Asia",
+          hosts: "Luna — travel blogger; Sam — adventure seeker",
+          targetAudience: "travel enthusiasts and adventure seekers",
+          tone: "storytelling",
+          duration: "45",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Climate Action",
+          topic: "environmental sustainability and climate change",
+          episodeTitle: "Building a Greener Future",
+          hosts:
+            "Dr. Green — environmental scientist; Maya — sustainability advocate",
+          targetAudience: "environmentally conscious individuals",
+          tone: "motivational",
+          duration: "40",
+          includeAds: false,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Gaming Galaxy",
+          topic: "video games and gaming culture",
+          episodeTitle: "The Evolution of Indie Games",
+          hosts: "Pixel — game developer; GamerGirl — streamer",
+          targetAudience: "gamers and game developers",
+          tone: "funny",
+          duration: "30",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Mindful Moments",
+          topic: "meditation and mindfulness practices",
+          episodeTitle: "Finding Peace in Chaos",
+          hosts: "Zen Master — meditation teacher; Peace — mindfulness coach",
+          targetAudience: "people seeking inner peace and mindfulness",
+          tone: "emotional",
+          duration: "25",
+          includeAds: false,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Science Stories",
+          topic: "scientific discoveries and research",
+          episodeTitle: "Breakthroughs in Quantum Physics",
+          hosts: "Dr. Quantum — physicist; Science — researcher",
+          targetAudience: "science enthusiasts and students",
+          tone: "educational",
+          duration: "60",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: false,
+        },
+        {
+          podcastName: "Art & Soul",
+          topic: "creative expression and artistic techniques",
+          episodeTitle: "Unleashing Your Creative Potential",
+          hosts: "Artist — professional painter; Muse — creative coach",
+          targetAudience: "artists and creative individuals",
+          tone: "motivational",
+          duration: "35",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Pet Care Pro",
+          topic: "animal care and pet training",
+          episodeTitle: "Understanding Your Dog's Behavior",
+          hosts: "Dr. Vet — veterinarian; Trainer — dog behaviorist",
+          targetAudience: "pet owners and animal lovers",
+          tone: "educational",
+          duration: "30",
+          includeAds: false,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Music Matters",
+          topic: "music production and songwriting",
+          episodeTitle: "Creating Your First Hit Song",
+          hosts: "Producer — music producer; Songwriter — lyricist",
+          targetAudience: "musicians and music producers",
+          tone: "professional",
+          duration: "50",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Home & Garden",
+          topic: "home improvement and gardening",
+          episodeTitle: "Creating Your Dream Garden",
+          hosts: "Gardener — landscape designer; DIY — home improvement expert",
+          targetAudience: "homeowners and gardening enthusiasts",
+          tone: "casual",
+          duration: "40",
+          includeAds: true,
+          includeTimestamps: false,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Health & Wellness",
+          topic: "nutrition and healthy living",
+          episodeTitle: "The Science of Intermittent Fasting",
+          hosts: "Dr. Health — nutritionist; Wellness — fitness coach",
+          targetAudience:
+            "health-conscious individuals and fitness enthusiasts",
+          tone: "educational",
+          duration: "35",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Finance Freedom",
+          topic: "personal finance and investing",
+          episodeTitle: "Building Wealth Through Real Estate",
+          hosts: "Investor — financial advisor; Wealth — real estate expert",
+          targetAudience: "young professionals and aspiring investors",
+          tone: "professional",
+          duration: "50",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Creative Corner",
+          topic: "photography and visual arts",
+          episodeTitle: "Mastering Portrait Photography",
+          hosts: "Lens — professional photographer; Frame — art director",
+          targetAudience: "photographers and visual artists",
+          tone: "educational",
+          duration: "45",
+          includeAds: false,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Language Learning",
+          topic: "language acquisition and cultural exchange",
+          episodeTitle: "Fluent in 90 Days: A Realistic Approach",
+          hosts: "Polyglot — language teacher; Globe — cultural expert",
+          targetAudience: "language learners and travel enthusiasts",
+          tone: "motivational",
+          duration: "30",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Productivity Pro",
+          topic: "time management and efficiency",
+          episodeTitle: "The Art of Deep Work",
+          hosts: "Focus — productivity coach; Flow — efficiency expert",
+          targetAudience: "professionals and entrepreneurs",
+          tone: "professional",
+          duration: "25",
+          includeAds: false,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "History Uncovered",
+          topic: "historical events and ancient civilizations",
+          episodeTitle: "The Lost City of Atlantis: Fact or Fiction?",
+          hosts:
+            "Historian — archaeology professor; Mystery — research scholar",
+          targetAudience: "history buffs and mystery enthusiasts",
+          tone: "storytelling",
+          duration: "55",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Spiritual Journey",
+          topic: "spirituality and personal growth",
+          episodeTitle: "Finding Your Life Purpose",
+          hosts: "Sage — spiritual teacher; Path — life coach",
+          targetAudience: "people seeking spiritual guidance",
+          tone: "emotional",
+          duration: "40",
+          includeAds: false,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Tech Startup",
+          topic: "entrepreneurship and innovation",
+          episodeTitle: "From Garage to IPO: Startup Success Stories",
+          hosts: "Founder — serial entrepreneur; Scale — venture capitalist",
+          targetAudience: "aspiring entrepreneurs and startup founders",
+          tone: "motivational",
+          duration: "60",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Comedy Central",
+          topic: "stand-up comedy and humor",
+          episodeTitle: "The Art of Making People Laugh",
+          hosts: "Joker — stand-up comedian; Punchline — comedy writer",
+          targetAudience: "comedy fans and aspiring comedians",
+          tone: "funny",
+          duration: "35",
+          includeAds: true,
+          includeTimestamps: false,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Wildlife Wonders",
+          topic: "animal behavior and conservation",
+          episodeTitle: "The Secret Lives of Dolphins",
+          hosts: "Marine — marine biologist; Ocean — wildlife researcher",
+          targetAudience: "animal lovers and nature enthusiasts",
+          tone: "educational",
+          duration: "45",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+        {
+          podcastName: "Fashion Forward",
+          topic: "fashion trends and style",
+          episodeTitle: "Sustainable Fashion Revolution",
+          hosts: "Style — fashion designer; Trend — sustainability advocate",
+          targetAudience: "fashion enthusiasts and eco-conscious consumers",
+          tone: "professional",
+          duration: "30",
+          includeAds: true,
+          includeTimestamps: true,
+          includeTagline: true,
+        },
+      ];
+
+      // Randomly select a sample data set
+      const randomIndex = Math.floor(Math.random() * sampleDataSets.length);
+      const sampleData = sampleDataSets[randomIndex];
+
+      // Fill form fields
+      const podcastNameEl = document.getElementById("podcastName");
+      const topicEl = document.getElementById("topic");
+      const episodeTitleEl = document.getElementById("episodeTitle");
+      const hostsEl = document.getElementById("hosts");
+      const targetAudienceEl = document.getElementById("targetAudience");
+      const toneEl = document.getElementById("tone");
+      const durationEl = document.getElementById("duration");
+      const includeAdsEl = document.getElementById("includeAds");
+      const includeTimestampsEl = document.getElementById("includeTimestamps");
+      const includeTaglineEl = document.getElementById("includeTagline");
+
+      if (podcastNameEl) podcastNameEl.value = sampleData.podcastName;
+      if (topicEl) topicEl.value = sampleData.topic;
+      if (episodeTitleEl) episodeTitleEl.value = sampleData.episodeTitle;
+      if (hostsEl) hostsEl.value = sampleData.hosts;
+      if (targetAudienceEl) targetAudienceEl.value = sampleData.targetAudience;
+      if (toneEl) toneEl.value = sampleData.tone;
+      if (durationEl) durationEl.value = sampleData.duration;
+      if (includeAdsEl) includeAdsEl.checked = sampleData.includeAds;
+      if (includeTimestampsEl)
+        includeTimestampsEl.checked = sampleData.includeTimestamps;
+      if (includeTaglineEl)
+        includeTaglineEl.checked = sampleData.includeTagline;
+
+      // Show success message with random sample info
+      this.showNotification(
+        `Random sample loaded: "${sampleData.podcastName}" - ${sampleData.episodeTitle}. You can now generate a script or modify the fields.`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Error filling sample data:", error);
+      this.showNotification(
+        "Error filling sample data. Please try again.",
+        "error"
+      );
+    }
+  }
+
+  clearForm() {
+    if (confirm("Are you sure you want to clear all form data?")) {
+      this.form.reset();
+      this.showNotification("Form cleared successfully!", "info");
+    }
+  }
+
+  showNotification(message, type = "info") {
+    // Create notification element
+    const notification = document.createElement("div");
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas fa-${
+                  type === "success"
+                    ? "check-circle"
+                    : type === "error"
+                    ? "exclamation-circle"
+                    : "info-circle"
+                }"></i>
+                <span>${message}</span>
+            </div>
+        `;
+
+    // Add styles
+    notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${
+              type === "success"
+                ? "#48bb78"
+                : type === "error"
+                ? "#f56565"
+                : "#4299e1"
+            };
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+        `;
+
+    document.body.appendChild(notification);
+
+    // Animate in
+    setTimeout(() => {
+      notification.style.transform = "translateX(0)";
+    }, 100);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+      notification.style.transform = "translateX(100%)";
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  showLoading() {
+    this.loadingOverlay.style.display = "flex";
+  }
+
+  hideLoading() {
+    this.loadingOverlay.style.display = "none";
+  }
+}
+
+// Initialize the application when DOM is loaded
+function initializeApp() {
+  console.log("DOM loaded, initializing PodcastScriptGenerator");
+  try {
+    new PodcastScriptGenerator();
+    console.log("PodcastScriptGenerator initialized successfully");
+  } catch (error) {
+    console.error("Error initializing PodcastScriptGenerator:", error);
+  }
+}
+
+// Check if DOM is already loaded
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeApp);
+} else {
+  // DOM is already loaded
+  initializeApp();
+}
