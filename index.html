@@ -18,7 +18,7 @@
     <div class="container">
       <header class="header">
         <div class="header-content">
-          <h1><i class="fas fa-microphone"></i> Podcast Script Generator</h1>
+          <h1><i class="fas fa-microphone" aria-hidden="true"></i> Podcast Script Generator</h1>
           <p>
             Create engaging podcast scripts tailored to your show's style and
             audience
@@ -180,16 +180,16 @@
                 </div>
 
                 <div class="form-actions">
-                  <button type="button" id="fillSampleBtn" class="sample-btn">
-                    <i class="fas fa-dice"></i>
+                  <button type="button" id="fillSampleBtn" class="sample-btn" aria-label="Fill form with random sample data">
+                    <i class="fas fa-dice" aria-hidden="true"></i>
                     Random Sample
                   </button>
-                  <button type="button" id="clearFormBtn" class="clear-btn">
-                    <i class="fas fa-trash"></i>
+                  <button type="button" id="clearFormBtn" class="clear-btn" aria-label="Clear all form fields">
+                    <i class="fas fa-trash" aria-hidden="true"></i>
                     Clear Form
                   </button>
-                  <button type="submit" class="generate-btn">
-                    <i class="fas fa-magic"></i>
+                  <button type="submit" class="generate-btn" aria-label="Generate podcast script">
+                    <i class="fas fa-magic" aria-hidden="true"></i>
                     Generate Script
                   </button>
                 </div>
@@ -204,8 +204,8 @@
                           
                         </select>
                         <div class="sample-buttons">
-                          <button type="button" id="loadSampleBtn" class="action-btn">Load Selected</button>
-                          <button type="button" id="previewSampleBtn" class="action-btn">Preview Selected</button>
+                          <button type="button" id="loadSampleBtn" class="action-btn" aria-label="Load selected sample into form">Load Selected</button>
+                          <button type="button" id="previewSampleBtn" class="action-btn" aria-label="Preview selected sample script">Preview Selected</button>
                         </div>
                         <p class="sample-note">Tip: use "Random Sample" for a quick example or choose a specific sample here.</p>
                       </div>
@@ -220,25 +220,25 @@
               <div class="output-header">
                 <h2>Generated Script</h2>
                 <div class="output-actions">
-                  <button id="copyBtn" class="action-btn">
-                    <i class="fas fa-copy"></i>
+                  <button id="copyBtn" class="action-btn" aria-label="Copy script to clipboard">
+                    <i class="fas fa-copy" aria-hidden="true"></i>
                     Copy Script
                   </button>
-                  <button id="downloadBtn" class="action-btn">
-                    <i class="fas fa-download"></i>
+                  <button id="downloadBtn" class="action-btn" aria-label="Download script as text file">
+                    <i class="fas fa-download" aria-hidden="true"></i>
                     Download
                   </button>
-                  <button id="printBtn" class="action-btn">
-                    <i class="fas fa-print"></i>
+                  <button id="printBtn" class="action-btn" aria-label="Print script">
+                    <i class="fas fa-print" aria-hidden="true"></i>
                     Print
                   </button>
-                  <button id="newScriptBtn" class="action-btn">
-                    <i class="fas fa-plus"></i>
+                  <button id="newScriptBtn" class="action-btn" aria-label="Start new script">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
                     New Script
                   </button>
                 </div>
               </div>
-              <div class="script-content" id="scriptContent"></div>
+              <div class="script-content" id="scriptContent" role="region" aria-label="Generated podcast script" aria-live="polite"></div>
             </div>
           </div>
         </div>
